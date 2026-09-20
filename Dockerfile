@@ -9,10 +9,12 @@ COPY requirements.txt .
 
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
+RUN addgroup --gid 10001 appgroup \
+    && adduser --uid 10001 --ingroup appgroup --disabled-password --gecos "" --no-create-home appuser
 
-RUN adduser --disabled-password --gecos "" appuser
-USER appuser
+COPY --chown=10001:10001 app ./app
+
+USER 10001:10001
 
 EXPOSE 8000
 
