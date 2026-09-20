@@ -1,4 +1,4 @@
-﻿apiVersion: v1
+apiVersion: v1
 kind: Namespace
 metadata:
   name: devops-lab
@@ -33,14 +33,14 @@ spec:
 
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
+        runAsUser: 10001
+        runAsGroup: 10001
         seccompProfile:
           type: RuntimeDefault
 
       containers:
         - name: app
-          image: ghcr.io/alexandrasirius/devops-delivery-lab:sha-c8058f4
+          image: ghcr.io/alexandrasirius/devops-delivery-lab:sha-0e64c2a
           imagePullPolicy: IfNotPresent
 
           ports:
@@ -49,7 +49,7 @@ spec:
 
           env:
             - name: APP_VERSION
-              value: "sha-c8058f4"
+              value: "sha-0e64c2a"
 
           readinessProbe:
             httpGet:
@@ -95,3 +95,4 @@ spec:
     - name: http
       port: 80
       targetPort: http
+
