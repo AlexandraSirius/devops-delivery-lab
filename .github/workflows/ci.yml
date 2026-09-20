@@ -65,7 +65,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix=sha-
+            type=sha,format=long,prefix=sha-
 
       - name: Build and publish Docker image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
@@ -74,3 +74,33 @@ jobs:
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Smoke test published image
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          image="ghcr.io/alexandrasirius/devops-delivery-lab:sha-${GITHUB_SHA}"
+
+          docker pull "${image}"
+          docker run --detach --name smoke-test --publish 8000:8000 "${image}"
+
+          trap 'docker logs smoke-test; docker rm --force smoke-test' EXIT
+
+          for attempt in {1..30}; do
+            status="$(docker inspect --format='{{.State.Health.Status}}' smoke-test)"
+
+            if [ "${status}" = "healthy" ]; then
+              curl --fail --silent http://127.0.0.1:8000/health
+              exit 0
+            fi
+
+            if [ "${status}" = "unhealthy" ]; then
+              exit 1
+            fi
+
+            sleep 1
+          done
+
+          exit 1
